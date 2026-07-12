@@ -2419,6 +2419,52 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
 .slow-loading-notice.show{
   display:block;
 }
+  /* ===== 별점 제출 완료 ===== */
+.rating-complete{
+  padding:12px 6px;
+  text-align:center;
+  animation:ratingComplete .35s ease-out both;
+}
+
+.rating-complete-icon{
+  width:44px;
+  height:44px;
+  margin:0 auto 10px;
+  border-radius:50%;
+  background:#e8f8f5;
+  color:#0f9f91;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+  font-weight:900;
+}
+
+.rating-complete h3{
+  margin:0 0 7px !important;
+  color:#0f766e !important;
+  font-size:16px !important;
+  font-weight:900 !important;
+}
+
+.rating-complete p{
+  margin:0 !important;
+  color:#64748b !important;
+  font-size:12.5px !important;
+  font-weight:700 !important;
+  line-height:1.6 !important;
+}
+
+@keyframes ratingComplete{
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
 </style>
 </head>
 
@@ -3326,7 +3372,7 @@ lastEnd = {
   if(startLng === endLng && startLat === endLat){
     alert("출발지와 목적지가 같습니다.");
     return;
-
+}
   document.getElementById("info").innerHTML = `
 <div class="loading-card">
 <b>사고데이터 기반으로 경로를 분석하고 있습니다</b>
@@ -4518,10 +4564,23 @@ function setRating(score){
     btn.style.cursor = "default";
   });
 
-  const ratingText = document.getElementById("ratingText");
-  if(ratingText){
-    ratingText.innerText = score + "점 평가가 저장되었습니다.";
-  }
+ const card = document.querySelector(".result-feedback-card");
+
+if(card){
+  card.innerHTML = `
+    <div class="rating-complete">
+      <div class="rating-complete-icon">✓</div>
+
+      <h3>평가해주셔서 감사합니다!</h3>
+
+      <p>
+        ${score}점 평가가 저장되었습니다.<br>
+        소중한 의견은 더 안전한 제주 여행 서비스를<br>
+        만드는 데 활용하겠습니다.
+      </p>
+    </div>
+  `;
+}
 
   fetch(feedbackApiUrl,{
     method:"POST",
