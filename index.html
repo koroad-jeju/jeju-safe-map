@@ -2381,6 +2381,28 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
 .risk-map-legend small{
   font-size:8.5px !important;
 }
+  /* ===== 경로 결과화면 별점 카드 ===== */
+.result-feedback-card{
+  margin:12px 0 !important;
+  padding:15px 14px !important;
+}
+
+.result-feedback-card h3{
+  margin:0 0 5px !important;
+  font-size:16px !important;
+}
+
+.result-feedback-card p{
+  margin:0 0 8px !important;
+}
+
+.result-feedback-card .rating-stars{
+  margin-top:6px !important;
+}
+
+.result-feedback-card .rating-stars button{
+  font-size:34px !important;
+}
 </style>
 </head>
 
@@ -3607,13 +3629,30 @@ ${recommend.durationMin === alt.durationMin
   </div>
 
   <div class="navi-grid final-navi"></div>
-<button
-type="button"
-class="analysis-link-btn"
-onclick="showRouteAnalysis()">
 
-경로 상세 분석 →
-</button>
+  <div class="feedback-card result-feedback-card">
+    <h3>이번 경로 추천은 어떠셨나요?</h3>
+    <p>별점을 선택하면 평가가 저장됩니다.</p>
+
+    <div class="rating-stars" id="ratingStars">
+      <button type="button" onclick="setRating(1)">☆</button>
+      <button type="button" onclick="setRating(2)">☆</button>
+      <button type="button" onclick="setRating(3)">☆</button>
+      <button type="button" onclick="setRating(4)">☆</button>
+      <button type="button" onclick="setRating(5)">☆</button>
+    </div>
+
+    <div id="ratingText" class="rating-text">
+      별점을 눌러주세요
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="analysis-link-btn"
+    onclick="showRouteAnalysis()">
+    경로 상세 분석 →
+  </button>
   <div class="info-split-col tip">
     <h3>
       <img src="map-pin-check.svg" class="title-svg">
@@ -3831,21 +3870,6 @@ Math.abs(recommend.durationMin-alt.durationMin) +
     <p><b>점수가 낮을수록 사고 심각도와 교통량을 고려했을 때 상대적으로 부담이 적은 경로</b>를 의미합니다.</p>
     <p>※ 실제 위험을 예측하거나 단정하는 값은 아닙니다.</p>
   </div>
-
-  <div class="feedback-card">
-    <h3>이번 경로 추천은 어떠셨나요?</h3>
-    <p>별점을 선택하면 평가가 저장됩니다.</p>
-
-    <div class="rating-stars" id="ratingStars">
-      <button type="button" onclick="setRating(1)">☆</button>
-      <button type="button" onclick="setRating(2)">☆</button>
-      <button type="button" onclick="setRating(3)">☆</button>
-      <button type="button" onclick="setRating(4)">☆</button>
-      <button type="button" onclick="setRating(5)">☆</button>
-    </div>
-
-    <div id="ratingText" class="rating-text">별점을 눌러주세요</div>
-  </div>
 `;
   
 document.getElementById("info").appendChild(resultWrap);
@@ -4056,6 +4080,17 @@ function getDistanceKm(lat1,lng1,lat2,lng2){
 function deg2rad(deg){
   return deg * (Math.PI/180);
 }
+  function openNavigationApp(url){
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
   function getSelectedRoute(){
   if(!lastRouteSummaries || lastRouteSummaries.length === 0){
     return null;
@@ -4175,7 +4210,7 @@ function selectRouteCourse(index){
 
     sendNavigationLog("네이버지도");
   
-  window.location.href = url;
+ openNavigationApp(url);
 }
  function openTmap(courseIndex = selectedRouteIndex){
   if(!lastStart || !lastEnd){
@@ -4195,7 +4230,7 @@ function selectRouteCourse(index){
     "&goalname=" + encodeURIComponent(lastEnd.name);
    
 sendNavigationLog("TMAP");
-  window.location.href = url;
+ openNavigationApp(url);
 }
 function openKakaoNavi(courseIndex = selectedRouteIndex){
   if(!lastStart || !lastEnd){
@@ -4223,7 +4258,7 @@ function openKakaoNavi(courseIndex = selectedRouteIndex){
       "&by=car";
   }
 sendNavigationLog("카카오맵");
-  window.location.href = url;
+  openNavigationApp(url);
 }
 
 
