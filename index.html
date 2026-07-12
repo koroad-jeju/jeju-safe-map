@@ -2403,6 +2403,22 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
 .result-feedback-card .rating-stars button{
   font-size:34px !important;
 }
+  /* 실제 로딩이 길어질 때만 표시 */
+.slow-loading-notice{
+  display:none;
+  margin-top:10px !important;
+  padding:10px 12px;
+  border-radius:14px;
+  background:#fff8e8;
+  color:#a16207 !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  line-height:1.5;
+}
+
+.slow-loading-notice.show{
+  display:block;
+}
 </style>
 </head>
 
@@ -3310,12 +3326,15 @@ lastEnd = {
   if(startLng === endLng && startLat === endLat){
     alert("출발지와 목적지가 같습니다.");
     return;
-  }
 
   document.getElementById("info").innerHTML = `
 <div class="loading-card">
 <b>사고데이터 기반으로 경로를 분석하고 있습니다</b>
   <p>사고데이터와 교통량을 단계별로 비교 중입니다.</p>
+  <p id="slowLoadingNotice" class="slow-loading-notice">
+  분석에 시간이 조금 더 걸리고 있습니다.<br>
+  약 5~10초 정도 소요될 수 있습니다.
+</p>
 
 <div class="loading-steps">
 
@@ -3342,6 +3361,14 @@ lastEnd = {
 </div>
 </div>
 `;
+    const slowLoadingTimer = setTimeout(() => {
+  const notice = document.getElementById("slowLoadingNotice");
+
+  if(notice){
+    notice.classList.add("show");
+  }
+}, 3000);
+
     document.querySelector(".panel").classList.add("route-mode");
     document.body.classList.add("route-active");
    setTimeout(()=>{
@@ -3407,6 +3434,7 @@ setTimeout(()=>{
 try{
   response = await requestOrsRoute(body);
 }catch(err){
+  clearTimeout(slowLoadingTimer);
   console.error("경로 분석 서버 전체 실패:", err);
 
   if(routeLayer){
@@ -3424,6 +3452,7 @@ try{
 
   return;
 }
+    clearTimeout(slowLoadingTimer);
     const data = await response.json();
 
     if(!data.features || data.features.length===0){
@@ -3935,6 +3964,7 @@ compactNavi.appendChild(kakaoBtn);
 }, 350);
     
  }catch(error){
+    clearTimeout(slowLoadingTimer);
   console.error("경로 분석 오류:", error);
 
   if(routeLayer){
