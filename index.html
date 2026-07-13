@@ -2658,6 +2658,20 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
   </div>
 </div>
       <p>
+      <div id="mountainRoadPopup" class="mountain-road-popup">
+  <div class="mountain-road-card">
+
+    <div class="mountain-road-icon">
+      <img src="alert-triangle.svg" alt="">
+    </div>
+
+    <h3>산간도로 운전 주의</h3>
+
+    <div id="mountainRoadName" class="mountain-road-name">
+      산간도로 포함
+    </div>
+
+    <p>
       추천경로에 운전 난이도가 높은 산간도로가 포함되어 있습니다.
       사고이력은 상대적으로 적더라도 실제 주행 시 각별한 주의가 필요합니다.
     </p>
@@ -4440,7 +4454,7 @@ function getRouteViaPoints(route, maxPoints = 3){
 
   const viaPoints = [];
 
-  // 출발지와 목적지 사이에 최대 5개 지점을 거리 기준으로 균등 배치
+  // 출발지와 목적지 사이에 최대 3개 지점을 거리 기준으로 균등 배치
   for(let i = 1; i <= maxPoints; i++){
     const targetDistance =
       totalDistance * (i / (maxPoints + 1));
