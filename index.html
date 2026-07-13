@@ -3858,7 +3858,7 @@ ${recommend.durationMin === alt.durationMin
 
   <div class="navi-grid final-navi"></div>
   <div class="tmap-note">
-  ※ TMAP은 추천 안전경로로만 길안내가 제공됩니다.
+  ※ TMAP 및 카카오맵은 추천 안전경로로만 길안내가 제공됩니다.
 </div>
 
 
@@ -4618,34 +4618,15 @@ function openKakaoNavi(courseIndex = selectedRouteIndex){
 
   selectedRouteIndex = courseIndex;
 
-  const selectedRoute = getSelectedRoute();
-  const viaPoints = getRouteViaPoints(selectedRoute, 1);
-
-  let url =
+  const url =
     "kakaomap://route?" +
-    "sp=" + lastStart.lat + "," + lastStart.lng;
-
-  viaPoints.forEach((point, index) => {
-    const key =
-      index === 0
-        ? "vp"
-        : "vp" + (index + 1);
-
-    url +=
-      "&" + key + "=" +
-      point.lat + "," + point.lng;
-  });
-
-  url +=
+    "sp=" + lastStart.lat + "," + lastStart.lng +
     "&ep=" + lastEnd.lat + "," + lastEnd.lng +
     "&by=car";
-
-  console.log("카카오 경유지:", viaPoints);
 
   sendNavigationLog("카카오맵");
   openNavigationApp(url);
 }
-
 async function searchDestination(){
 console.log("검색 함수 실행");
   const keyword = document.getElementById("endInput").value.trim();
