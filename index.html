@@ -2475,6 +2475,116 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
   line-height:1.4;
   word-break:keep-all;
 }
+  /* ===== 산간도로 주의 팝업 ===== */
+.mountain-road-popup{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:40000;
+  background:rgba(15,23,42,.48);
+  padding:0 18px;
+  box-sizing:border-box;
+  align-items:center;
+  justify-content:center;
+}
+
+.mountain-road-popup.active{
+  display:flex;
+}
+
+.mountain-road-card{
+  width:100%;
+  max-width:390px;
+  padding:22px 20px 18px;
+  border-radius:26px;
+  background:#fff;
+  box-shadow:0 24px 60px rgba(15,23,42,.28);
+  text-align:center;
+  animation:mountainPopupAppear .28s ease-out both;
+}
+
+.mountain-road-icon{
+  width:54px;
+  height:54px;
+  margin:0 auto 13px;
+  border-radius:50%;
+  background:#fff4e5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.mountain-road-icon img{
+  width:27px;
+  height:27px;
+}
+
+.mountain-road-card h3{
+  margin:0;
+  color:#0f172a;
+  font-size:19px;
+  font-weight:900;
+  letter-spacing:-.4px;
+}
+
+.mountain-road-name{
+  display:inline-block;
+  margin-top:10px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:#fff4e5;
+  color:#c2410c;
+  font-size:12px;
+  font-weight:900;
+}
+
+.mountain-road-card p{
+  margin:13px 0 0;
+  color:#475569;
+  font-size:13.5px;
+  font-weight:700;
+  line-height:1.65;
+  word-break:keep-all;
+}
+
+.mountain-road-list{
+  margin:14px 0 0;
+  padding:13px 14px;
+  border-radius:17px;
+  background:#f8fafc;
+  text-align:left;
+}
+
+.mountain-road-list div{
+  margin:6px 0;
+  color:#334155;
+  font-size:12.5px;
+  font-weight:750;
+  line-height:1.45;
+}
+
+.mountain-road-confirm{
+  width:100%;
+  height:48px;
+  margin-top:17px;
+  border:0;
+  border-radius:17px;
+  background:linear-gradient(135deg,#0f8f80,#14b8a6);
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+}
+
+@keyframes mountainPopupAppear{
+  from{
+    opacity:0;
+    transform:translateY(12px) scale(.98);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
 </style>
 </head>
 
@@ -2543,6 +2653,26 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
      <div class="side-arrow">
   <img src="chevron-right.svg">
 </div>
+    </button>
+
+  </div>
+</div>
+      <p>
+      추천경로에 운전 난이도가 높은 산간도로가 포함되어 있습니다.
+      사고이력은 상대적으로 적더라도 실제 주행 시 각별한 주의가 필요합니다.
+    </p>
+
+    <div class="mountain-road-list">
+      <div>• 급커브와 급경사 구간에서 충분히 감속하세요.</div>
+      <div>• 안개·비·결빙 등 갑작스러운 기상변화에 주의하세요.</div>
+      <div>• 내리막에서는 풋브레이크와 엔진브레이크를 함께 사용하세요.</div>
+    </div>
+
+    <button
+      type="button"
+      class="mountain-road-confirm"
+      onclick="closeMountainRoadPopup()">
+      확인했습니다
     </button>
 
   </div>
@@ -3962,7 +4092,14 @@ Math.abs(recommend.durationMin-alt.durationMin) +
 `;
   
 document.getElementById("info").appendChild(resultWrap);
+/* 추천경로가 1100도로 또는 5·16도로를 지나는지 확인 */
+const detectedMountainRoads = detectMountainRoad(recommend);
 
+if(detectedMountainRoads.length > 0){
+  setTimeout(() => {
+    showMountainRoadPopup(detectedMountainRoads);
+  }, 450);
+}
 const compactNavi = resultWrap.querySelector(".final-navi");
 const safeBtn = document.createElement("button");
 safeBtn.className = "navi-btn";
@@ -4169,6 +4306,92 @@ function getDistanceKm(lat1,lng1,lat2,lng2){
 
 function deg2rad(deg){
   return deg * (Math.PI/180);
+}
+  /* ===== 1100도로 · 5·16도로 포함 여부 검사 ===== */
+
+const mountainRoadZones = [
+  {
+    name:"1100도로",
+    radius:1.15,
+    points:[
+      { lat:33.4050, lng:126.4890 },
+      { lat:33.3850, lng:126.4790 },
+      { lat:33.3580, lng:126.4625 },
+      { lat:33.3370, lng:126.4590 },
+      { lat:33.3110, lng:126.4690 }
+    ]
+  },
+  {
+    name:"5·16도로",
+    radius:1.15,
+    points:[
+      { lat:33.4380, lng:126.5570 },
+      { lat:33.4140, lng:126.5790 },
+      { lat:33.3850, lng:126.6060 },
+      { lat:33.3690, lng:126.6240 },
+      { lat:33.3440, lng:126.6100 },
+      { lat:33.3150, lng:126.5860 }
+    ]
+  }
+];
+
+function detectMountainRoad(route){
+  if(!route || !Array.isArray(route.coords)){
+    return [];
+  }
+
+  const detectedRoads = [];
+
+  mountainRoadZones.forEach(road => {
+    let matchedPointCount = 0;
+
+    road.points.forEach(roadPoint => {
+      const isNearRoadPoint = route.coords.some(routePoint => {
+        const distance = getDistanceKm(
+          routePoint[0],
+          routePoint[1],
+          roadPoint.lat,
+          roadPoint.lng
+        );
+
+        return distance <= road.radius;
+      });
+
+      if(isNearRoadPoint){
+        matchedPointCount++;
+      }
+    });
+
+    /*
+      한 지점만 우연히 근접한 경우를 제외하고,
+      기준점 2개 이상을 통과할 때 해당 도로로 판단
+    */
+    if(matchedPointCount >= 2){
+      detectedRoads.push(road.name);
+    }
+  });
+
+  return detectedRoads;
+}
+
+function showMountainRoadPopup(roadNames){
+  if(!roadNames || roadNames.length === 0){
+    return;
+  }
+
+  const popup = document.getElementById("mountainRoadPopup");
+  const nameBox = document.getElementById("mountainRoadName");
+
+  nameBox.textContent =
+    roadNames.join(" · ") + " 포함";
+
+  popup.classList.add("active");
+}
+
+function closeMountainRoadPopup(){
+  document
+    .getElementById("mountainRoadPopup")
+    .classList.remove("active");
 }
   function openNavigationApp(url){
   const link = document.createElement("a");
