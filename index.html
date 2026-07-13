@@ -3241,35 +3241,15 @@ fetch("jeju_regions.geojson")
 
         const region = getJejuRegion(name);
         const risk = regionRisk[region];
-
-        return {
-          color:"#ffffff",
-          weight:2.4,
-          opacity:1,
-          fillColor: risk ? risk.color : "#e5e7eb",
-          fillOpacity: risk ? 0.52 : 0.12
-        };
+return {
+  color:"#ffffff",
+  weight:2.4,
+  opacity:1,
+  fillColor: risk ? risk.color : "#e5e7eb",
+  fillOpacity: risk ? 0.52 : 0.12,
+  interactive:false
+};
       },
-
-      onEachFeature: function(feature, layer){
-        const name =
-          feature.properties.adm_nm ||
-          feature.properties.name ||
-          feature.properties.EMD_NM ||
-          feature.properties.SIG_KOR_NM ||
-          "";
-
-        const region = getJejuRegion(name);
-        const guide = regionGuide[region] || regionGuide["기타"];
-
-        layer.bindPopup(`
-          <div class="region-popup">
-            <div class="region-popup-title">🚦 ${guide.title}</div>
-            <div class="region-popup-level">${guide.level}</div>
-            <div class="region-popup-text">${guide.caution}</div>
-          </div>
-        `);
-      }
     }).addTo(map);
   });
 
@@ -3717,24 +3697,14 @@ routeSummaries.forEach((summary,index)=>{
   const isRecommended = index === recommendedIndex;
   const lineColor = isRecommended ? "#14b8a6" : "#8b8f97";
   const labelClass = isRecommended ? "route-label-1" : "route-label-2";
-
- L.polyline(coords,{
+L.polyline(coords,{
   color: lineColor,
   weight:8,
   opacity:0.92,
   lineCap:"round",
-  lineJoin:"round"
-})
-  .addTo(routeLayer)
-.bindPopup(
-  "<b>" + (index + 1) + "코스</b><br>" +
-  "거리 : " + summary.distanceKm + "km<br>" +
-  "예상시간 : " + summary.durationMin + "분<br>" +
-  "위험도 : " + summary.risk.icon + " " + summary.risk.level + "<br>" +
-  "경로 주변 사고 : " + summary.risk.totalCount + "건<br>" +
-  "EPDO 합계 : " + summary.risk.totalEpdo + "점"
-);
-
+  lineJoin:"round",
+  interactive:false
+}).addTo(routeLayer);
  const middleIndex = Math.floor(coords.length / 2);
 const labelPoint = coords[middleIndex];
 
