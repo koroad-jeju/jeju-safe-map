@@ -2862,9 +2862,9 @@ body.route-analysis-mode .info-split-col.tip{
         </div>
 
         <div class="epdo-desc2">
-            사고데이터 · EPDO · 교통량을 반영하여
-            상대적으로 안전한 경로를 안내합니다.
-        </div>
+  사고데이터와 사고 심각도를 활용해
+  이동 경로 주변의 위험정보를 제공합니다.
+</div>
 
     </div>
 
@@ -3322,20 +3322,21 @@ return {
   });
 
 let routeLayer;
-let customStart = null;
-let customStartName = null;
-let customEnd = null;
-let customEndName = null;
-let lastStart = null;
-let lastEnd = null;
-  let lastRouteAnalysisHtml = "";
-  let lastFeedbackData = {};
-  let ratingSubmitted = false;
-  let selectedRouteIndex = 0;
-let lastRouteSummaries = [];
-  let lastRecommendedIndex = 0;
-let customStartArea = "기타";
-let lastNavigation = "";
+customStart = null;
+customEnd = null;
+customStartName = null;
+customEndName = null;
+customStartArea = "기타";
+lastNavigation = "";
+
+lastStart = null;
+lastEnd = null;
+lastRouteAnalysisHtml = "";
+lastRouteSummaries = [];
+lastFeedbackData = {};
+selectedRouteIndex = 0;
+lastRecommendedIndex = 0;
+ratingSubmitted = false;
   
 
   const destinationTips = {
@@ -3602,7 +3603,7 @@ lastEnd = {
 
   <div class="loading-step" id="step4">
     <span class="step-spinner"></span>
-    <span>추천경로 생성 중</span>
+    <span>비교 경로 생성 중</span>
   </div>
 
 </div>
@@ -3657,7 +3658,7 @@ setTimeout(()=>{
     s.className="loading-step done";
     s.innerHTML=`
       <span class="step-dot"></span>
-      <span>추천경로 생성 완료</span>
+      <span>비교 경로 생성 완료</span>
     `;
   }
 },1400);
@@ -4298,11 +4299,7 @@ function closeMountainRoadPopup(){
     // 숫자로 저장해야 나중에 평균·합계 계산 가능
     risk: selectedRisk,
 
-    // 추천경로를 골랐는지 여부
-    routeChoice:
-      index === lastRecommendedIndex
-        ? "추천"
-        : "대안",
+routeChoice: (index + 1) + "코스 기준",
 
     // 현재 선택경로와 비교되는 다른 경로
     altRisk: otherRisk,
@@ -4683,7 +4680,6 @@ function sendRouteAnalysisLog(){
   function sendNavigationLog(navigationName){
 
   lastNavigation = navigationName;
-  updateLastFeedbackData(selectedRouteIndex);
 
   fetch(feedbackApiUrl,{
     method:"POST",
@@ -4693,24 +4689,22 @@ function sendRouteAnalysisLog(){
       "Content-Type":"application/json"
     },
     body:JSON.stringify({
-      start:lastFeedbackData.start,
-      end:lastFeedbackData.end,
-      route:lastFeedbackData.route,
-      distance:lastFeedbackData.distance,
-      time:lastFeedbackData.time,
-      count:lastFeedbackData.count,
-      epdo:lastFeedbackData.epdo,
-      risk:lastFeedbackData.risk,
-
+      start:lastStart?.name || "",
+      end:lastEnd?.name || "",
+      route:"내비 자체경로",
+      distance:"",
+      time:"",
+      count:"",
+      epdo:"",
+      risk:"",
       feedback:"길안내",
-
-      routeChoice:lastFeedbackData.routeChoice,
-      altRisk:lastFeedbackData.altRisk,
-      riskDiff:lastFeedbackData.riskDiff,
-      altTime:lastFeedbackData.altTime,
-      timeDiff:lastFeedbackData.timeDiff,
+      routeChoice:"내비 앱 자체경로",
+      altRisk:"",
+      riskDiff:"",
+      altTime:"",
+      timeDiff:"",
       navigation:navigationName,
-      currentArea:lastFeedbackData.currentArea
+      currentArea:customStartArea || "기타"
     })
   });
 }
@@ -5059,25 +5053,11 @@ content.innerHTML = `
       사망·중상사고일수록 더 높은 점수가 부여됩니다.
     </p>
     <p>
-      이 서비스는 사고데이터, EPDO, 교통량 보정값을 함께 반영해
-      상대적으로 안전한 경로를 안내합니다.
-    </p>
+  이 서비스는 사고데이터와 사고 심각도를 분석해
+  이동 경로 주변의 사고정보를 비교하여 제공합니다.
+</p>
   </div>
 
-  <div class="risk-score-guide">
-    <h3>위험점수 안내</h3>
-    <p>
-      위험점수는 경로 주변 사고이력, 사고 심각도, 주변 교통량 보정값을
-      함께 반영한 참고 지표입니다.
-    </p>
-    <p>
-      점수가 낮을수록 사고 심각도와 교통량을 고려했을 때
-      상대적으로 부담이 적은 경로를 의미합니다.
-    </p>
-    <p>
-      ※ 실제 위험을 예측하거나 단정하는 값은 아닙니다.
-    </p>
-  </div>
 `;
 
     popup.classList.add("active");
