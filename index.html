@@ -44,7 +44,9 @@ html, body{
 body.route-active #map{
   display:block;
 }
-
+body.route-analysis-mode #map{
+  display:block;
+}
 #map::after{
   content:"";
   position:absolute;
@@ -142,7 +144,7 @@ body.route-active #map{
 }
 
 .route-label-1{ background:#14b8a6; }
-.route-label-2{ background:#ef4444; }
+.route-label-2{ background:#64748b; }
 
 /* ===== 경로 분석 후 화면 ===== */
 body.route-active .app-topbar,
@@ -983,19 +985,31 @@ body.safety-guide-mode .risk-map-page{
   font-weight:750;
   line-height:1.45;
 }
-  .route-analysis-page{
+ .route-analysis-page{
   display:none;
   position:fixed;
-  inset:64px 0 68px 0;
-  background:#f8fafc;
+  top:42vh;
+  left:0;
+  right:0;
+  bottom:68px;
   z-index:10000;
   overflow-y:auto;
-  padding:16px 14px 28px;
+  padding:12px 14px 110px;
   box-sizing:border-box;
+  border-radius:28px 28px 0 0;
+  background:#f8fafc;
+  box-shadow:0 -10px 28px rgba(15,23,42,.10);
 }
 
 body.route-analysis-mode .route-analysis-page{
   display:block;
+}
+  body.route-analysis-mode .app-topbar{
+  display:none;
+}
+
+body.route-analysis-mode .bottom-nav{
+  display:grid;
 }
 
 body.route-analysis-mode .panel,
@@ -2585,6 +2599,60 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
     transform:translateY(0) scale(1);
   }
 }
+  /* ===== 기능 다이어트 후 경로분석 화면 ===== */
+
+.route-data-note{
+  margin-top:13px;
+  padding-top:11px;
+  border-top:1px solid #edf2f7;
+  color:#64748b;
+  font-size:11.5px;
+  font-weight:700;
+  line-height:1.55;
+  word-break:keep-all;
+}
+
+.navi-section{
+  margin:12px 0;
+  padding:16px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid #edf2f7;
+  box-shadow:0 8px 22px rgba(15,23,42,.06);
+}
+
+.navi-section h3{
+  margin:0 0 10px;
+  color:#0f172a;
+  font-size:16px;
+  font-weight:900;
+}
+
+.navi-section .navi-grid{
+  margin-top:0;
+}
+
+body.route-analysis-mode .compare-mini.recommend{
+  border:1px solid #99e2d8;
+  background:#f3fffd;
+}
+
+body.route-analysis-mode .compare-mini.alt{
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+}
+
+body.route-analysis-mode .compare-head{
+  justify-content:flex-start;
+}
+
+body.route-analysis-mode .compare-head b{
+  font-size:17px;
+}
+
+body.route-analysis-mode .info-split-col.tip{
+  margin-top:12px;
+}
 </style>
 </head>
 
@@ -2670,10 +2738,10 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
       산간도로 포함
     </div>
 
-    <p>
-      추천경로에 운전 난이도가 높은 산간도로가 포함되어 있습니다.
-      사고이력은 상대적으로 적더라도 실제 주행 시 각별한 주의가 필요합니다.
-    </p>
+   <p>
+  표시된 경로 중 운전 난이도가 높은 산간도로를 지나는 코스가 있습니다.
+  사고이력은 상대적으로 적더라도 실제 주행 시 각별한 주의가 필요합니다.
+</p>
 
     <div class="mountain-road-list">
       <div>• 급커브와 급경사 구간에서 충분히 감속하세요.</div>
@@ -2706,9 +2774,9 @@ box-shadow:0 10px 24px rgba(20,184,166,.18);
     <div class="hero-text">
       <div class="hero-title">안전한 제주 여행의 시작</div>
       <div class="hero-sub">
-        사고데이터와 교통량을 분석하여<br>
-상대적으로 안전한 경로를 추천합니다
-      </div>
+  출발지에서 목적지까지의 경로와<br>
+  주변 사고정보를 미리 확인하세요
+</div>
     </div>
   </div>
 
@@ -3673,30 +3741,19 @@ routes.forEach((route,index)=>{
   
 });
 lastRouteSummaries = routeSummaries;
-let recommendedIndex = 0;
 
-if(routeSummaries.length > 1){
-  recommendedIndex = routeSummaries
-    .map((r, i) => ({ ...r, index:i }))
-    .sort((a, b) => {
-      if(a.risk.score !== b.risk.score){
-        return a.risk.score - b.risk.score;
-      }
-      if(a.durationMin !== b.durationMin){
-        return a.durationMin - b.durationMin;
-      }
-      return Number(a.distanceKm) - Number(b.distanceKm);
-    })[0].index;
-}
-selectedRouteIndex = recommendedIndex;
-    lastRecommendedIndex = recommendedIndex;
+/*
+  추천·대안 개념은 사용하지 않고
+  ORS에서 받은 순서대로 1코스, 2코스로 표시
+*/
+selectedRouteIndex = 0;
+lastRecommendedIndex = 0;
 routeSummaries.forEach((summary,index)=>{
   const coords = summary.coords;
   allCoords = allCoords.concat(coords);
 
-  const isRecommended = index === recommendedIndex;
-  const lineColor = isRecommended ? "#14b8a6" : "#8b8f97";
-  const labelClass = isRecommended ? "route-label-1" : "route-label-2";
+const lineColor = index === 0 ? "#14b8a6" : "#64748b";
+const labelClass = index === 0 ? "route-label-1" : "route-label-2";
 L.polyline(coords,{
   color: lineColor,
   weight:8,
@@ -3718,122 +3775,156 @@ const labelPoint = coords[middleIndex];
   }).addTo(routeLayer);
 });
 
-const recommend = routeSummaries[recommendedIndex];
+const route1 = routeSummaries[0];
+const route2 = routeSummaries.length > 1
+  ? routeSummaries[1]
+  : null;
 
-    const matchedTipKey = Object.keys(destinationTips).find(key =>
+const matchedTipKey = Object.keys(destinationTips).find(key =>
   endName.includes(key) || key.includes(endName)
 );
 
-const altIndex = routeSummaries.length > 1
-  ? (recommendedIndex === 0 ? 1 : 0)
-  : recommendedIndex;
+const tips = matchedTipKey
+  ? destinationTips[matchedTipKey]
+  : [
+      "관광지 주변에서는 보행자와 주정차 차량에 주의하세요.",
+      "목적지를 놓쳤더라도 급차로 변경하지 마세요.",
+      "교차로와 관광지 진출입 구간에서는 충분히 감속하세요."
+    ];
 
-const alt = routeSummaries[altIndex];
-const riskDiff =
-  alt.risk.score > 0
-    ? Math.max(0, Math.round((1 - recommend.risk.score / alt.risk.score) * 100))
-    : 0;
-    const riskCompareText =
-  riskDiff > 0
-    ? "대안경로 대비<br><b>위험도 " + riskDiff + "% 감소</b>"
-    : "대안 경로와 유사";
+/*
+  코스 비교 결과 화면
+  추천·대안·AI 설명·위험점수는 표시하지 않음
+*/
+lastRouteAnalysisHtml = `
+  <div class="routePath">
+    ${startName}
+    <span class="arrow">→</span>
+    ${endName}
+  </div>
 
-const resultWrap = document.createElement("div");
-    resultWrap.className = "result-appear";
+  <div class="compare-detail-new always-open">
+    <div class="compare-title">
+      <img src="chart-bar.svg" class="title-svg">
+      코스 상세 비교
+    </div>
 
-const recommendCourseName = (recommendedIndex + 1) + "코스";
-const altCourseName = (altIndex + 1) + "코스";
+    <div class="compare-cards">
 
-const tips = destinationTips[endName] || [
-  "관광버스와 렌터카 통행이 많은 구간입니다.",
-  "목적지를 놓쳐도 급차로 변경하지 마세요.",
-  "교차로와 관광지 진출입 차량을 주의하세요."
-];
-
-
-resultWrap.innerHTML = `
-  <div class="result-hero-card new-result">
-    <div class="result-main-grid">
-      <div class="result-course">
-        <div class="result-shield">
-          <img src="shield-check.svg">
+      <div class="compare-mini recommend">
+        <div class="compare-head">
+          <b>1코스</b>
         </div>
 
-        <div>
-          <div class="result-title">
-            ${recommendCourseName}
-            <span class="recommend-badge">추천</span>
-          </div>
+        <div class="compare-row2">
+          <span>거리</span>
+          <b>${route1.distanceKm}km</b>
+        </div>
 
-          <div class="result-sub">
-            사고이력과 교통량을 분석한<br>
-            추천 경로입니다.
-          </div>
+        <div class="compare-row2">
+          <span>예상시간</span>
+          <b>${route1.durationMin}분</b>
+        </div>
 
-          <div class="result-reason">
-            <span class="reason-chip">${riskCompareText}</span>
-          </div>
+        <div class="compare-row2">
+          <span>경로 주변 사고이력</span>
+          <b>${route1.risk.totalCount}건</b>
+        </div>
+
+        <div class="compare-row2">
+          <span>사고 심각도 합계</span>
+          <b>${route1.risk.totalEpdo}점</b>
         </div>
       </div>
 
-      <div class="result-metric">
-        <div class="result-metric-icon">
-          <img src="route.svg">
+      ${
+        route2
+          ? `
+      <div class="compare-mini alt">
+        <div class="compare-head">
+          <b>2코스</b>
         </div>
-        <span>거리</span>
-        <b>${recommend.distanceKm}km</b>
-      </div>
 
-      <div class="result-metric">
-        <div class="result-metric-icon">
-          <img src="clock.svg">
+        <div class="compare-row2">
+          <span>거리</span>
+          <b>${route2.distanceKm}km</b>
         </div>
-        <span>시간</span>
-        <b>${recommend.durationMin}분</b>
+
+        <div class="compare-row2">
+          <span>예상시간</span>
+          <b>${route2.durationMin}분</b>
+        </div>
+
+        <div class="compare-row2">
+          <span>경로 주변 사고이력</span>
+          <b>${route2.risk.totalCount}건</b>
+        </div>
+
+        <div class="compare-row2">
+          <span>사고 심각도 합계</span>
+          <b>${route2.risk.totalEpdo}점</b>
+        </div>
       </div>
+          `
+          : `
+      <div class="compare-mini alt">
+        <div class="compare-head">
+          <b>2코스</b>
+        </div>
+
+        <div class="compare-row2">
+          <span>경로 정보</span>
+          <b>대안 경로 없음</b>
+        </div>
+      </div>
+          `
+      }
+
+    </div>
+
+    <div class="route-data-note">
+      ※ 사고이력은 경로 주변의 과거 사고자료를 기준으로 제공되는 참고정보입니다.
     </div>
   </div>
 
-  <div class="ai-mini-summary">
-    <h3>AI 한줄 요약</h3>
-    <p>
-추천 경로는 대안 경로보다
-<b>위험점수가 낮고</b>,<br>
-예상 시간은
-<b>
-${recommend.durationMin === alt.durationMin
-? "비슷합니다"
-: Math.abs(recommend.durationMin-alt.durationMin)+"분 "+(recommend.durationMin>alt.durationMin?"더 걸립니다":"빠릅니다")}
-</b>
-</p>
-  </div>
+  <div class="navi-section">
+    <h3>내비게이션으로 길안내</h3>
 
-  <div class="course-choice-box">
-    <h3>코스 선택</h3>
-    <p>원하는 코스를 선택한 뒤 길안내를 연결할 수 있습니다.</p>
+    <div class="navi-grid final-navi">
 
-    <div class="course-choice-grid">
-      ${routeSummaries.map((r, i) => `
-        <button type="button"
-          class="course-choice-btn ${i === selectedRouteIndex ? "active" : ""}"
-          onclick="selectRouteCourse(${i})">
-          <b>${i + 1}코스 ${i === recommendedIndex ? "추천" : "대안"}</b>
-          <strong>${r.durationMin}분</strong>
-          <span>${r.distanceKm}km</span>
-          <small>위험점수 ${r.risk.riskScoreText}</small>
-        </button>
-      `).join("")}
+      <button type="button" class="navi-btn" onclick="openNaverMap()">
+        <span class="nav-icon naver">N</span>
+        <span class="nav-text">
+          <b>네이버지도</b>
+          <small>길안내</small>
+        </span>
+      </button>
+
+      <button type="button" class="navi-btn" onclick="openTmap()">
+        <span class="nav-icon tmap">T</span>
+        <span class="nav-text">
+          <b>TMAP</b>
+          <small>길안내</small>
+        </span>
+      </button>
+
+      <button type="button" class="navi-btn" onclick="openKakaoNavi()">
+        <span class="nav-icon kakao">K</span>
+        <span class="nav-text">
+          <b>카카오맵</b>
+          <small>길안내</small>
+        </span>
+      </button>
+
+    </div>
+
+    <div class="tmap-note">
+      ※ 길안내 경로는 각 내비게이션 앱의 설정과 교통상황에 따라 달라질 수 있습니다.
     </div>
   </div>
-
-  <div class="navi-grid final-navi"></div>
-  <div class="tmap-note">
-  ※ TMAP 및 카카오맵은 추천 안전경로로만 길안내가 제공됩니다.
-</div>
-
 
   <div class="feedback-card result-feedback-card">
-    <h3>이번 경로 추천은 어떠셨나요?</h3>
+    <h3>이번 경로정보는 도움이 되었나요?</h3>
     <p>별점을 선택하면 평가가 저장됩니다.</p>
 
     <div class="rating-stars" id="ratingStars">
@@ -3849,283 +3940,71 @@ ${recommend.durationMin === alt.durationMin
     </div>
   </div>
 
-  <button
-    type="button"
-    class="analysis-link-btn"
-    onclick="showRouteAnalysis()">
-    경로 상세 분석 →
-  </button>
   <div class="info-split-col tip">
     <h3>
       <img src="map-pin-check.svg" class="title-svg">
-      ${endName} 맞춤 안전팁
+      ${endName} 이동 시 안전운전 팁
     </h3>
 
     <div class="tip-list">
       <div class="tip-item">
-        <span><img src="car.svg" class="tip-icon"></span>
+        <span>
+          <img src="car.svg" class="tip-icon">
+        </span>
         <div>${tips[0]}</div>
       </div>
 
       <div class="tip-item">
-        <span><img src="alert-triangle.svg" class="tip-icon"></span>
+        <span>
+          <img src="alert-triangle.svg" class="tip-icon">
+        </span>
         <div>${tips[1]}</div>
       </div>
 
       <div class="tip-item">
-        <span><img src="eye.svg" class="tip-icon"></span>
+        <span>
+          <img src="eye.svg" class="tip-icon">
+        </span>
         <div>${tips[2]}</div>
       </div>
     </div>
   </div>
 `;
-    ratingSubmitted = false;
+
+ratingSubmitted = false;
 lastNavigation = "";
-updateLastFeedbackData(recommendedIndex);
+
+/*
+  별점과 이용 기록 저장용 기본값은 1코스를 사용
+*/
+updateLastFeedbackData(0);
 sendRouteAnalysisLog();
 
-lastRouteAnalysisHtml = `
-  <div class="routePath">${startName} <span class="arrow">→</span> ${endName}</div>
+/*
+  1코스와 2코스 모두 산간도로 포함 여부 확인
+*/
+const detectedMountainRoads = [];
 
-  <div class="result-hero-card new-result">
-    <div class="result-main-grid">
-      <div class="result-course">
-        <div class="result-shield">
-          <img src="shield-check.svg">
-        </div>
+routeSummaries.forEach((route, index) => {
+  const roads = detectMountainRoad(route);
 
-        <div>
-          <div class="result-title">
-            ${recommendCourseName}
-            <span class="recommend-badge">추천</span>
-          </div>
-
-          <div class="result-sub">
-            사고이력과 교통량을 분석한<br>
-            추천 경로입니다.
-          </div>
-
-          <div class="result-reason">
-            <span class="reason-chip">${riskCompareText}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="result-metric">
-        <div class="result-metric-icon">
-          <img src="route.svg">
-        </div>
-        <span>거리</span>
-        <b>${recommend.distanceKm}km</b>
-      </div>
-
-      <div class="result-metric">
-        <div class="result-metric-icon">
-          <img src="clock.svg">
-        </div>
-        <span>시간</span>
-        <b>${recommend.durationMin}분</b>
-      </div>
-    </div>
-  </div>
-
-  <div class="analysis-main-card">
-    <h3>🤖 AI 안전 브리핑</h3>
-
-<div class="analysis-point">
-
-  <div class="analysis-icon">
-    <img src="shield-check.svg">
-  </div>
-
-  <div class="analysis-text">
-    <b>사고이력</b>
-
-    <span>
-      대안 경로보다
-      <strong>${Math.max(0, alt.risk.totalCount - recommend.risk.totalCount)}건 적은 사고</strong>가
-      확인되었습니다.
-    </span>
-
-  </div>
-
-</div>
-
-   <div class="analysis-point">
-
-  <div class="analysis-icon">
-    <img src="chart-bar.svg">
-  </div>
-
-  <div class="analysis-text">
-
-    <b>EPDO</b>
-
-    <span>
-      사고 심각도 지수는
-      <strong>${Math.max(0, alt.risk.totalEpdo - recommend.risk.totalEpdo)}점 낮습니다.</strong>
-    </span>
-
-  </div>
-
-</div>
-
- <div class="analysis-point">
-
-  <div class="analysis-icon">
-    <img src="clock.svg">
-  </div>
-
-  <div class="analysis-text">
-
-    <b>예상시간</b>
-
-    <span>
-
-${recommend.durationMin === alt.durationMin
-? "대안 경로와 거의 동일합니다."
-: "대안 경로보다 " +
-Math.abs(recommend.durationMin-alt.durationMin) +
-"분 " +
-(recommend.durationMin>alt.durationMin
-? "더 걸립니다."
-: "빠릅니다.")}
-
-    </span>
-
-  </div>
-
-</div>
-  </div>
-
-  <div class="compare-detail-new always-open">
-    <div class="compare-title">
-      <img src="chart-bar.svg" class="title-svg">
-      경로 상세 비교
-    </div>
-
-    <div class="compare-cards">
-      <div class="compare-mini recommend">
-        <div class="compare-head">
-          <span class="compare-tag">추천</span>
-          <b>${recommendCourseName}</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>거리</span>
-          <b>${recommend.distanceKm}km</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>시간</span>
-          <b>${recommend.durationMin}분</b>
-        </div>
-
-        <div class="compare-row2 risk-score">
-          <span>위험점수</span>
-          <b>${recommend.risk.riskScoreText}</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>사고이력</span>
-          <b>${recommend.risk.totalCount}건</b>
-        </div>
-
-        <div class="risk-compare-note">${riskCompareText}</div>
-      </div>
-
-      <div class="compare-mini alt">
-        <div class="compare-head">
-          <span class="compare-tag">대안</span>
-          <b>${altCourseName}</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>거리</span>
-          <b>${alt.distanceKm}km</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>시간</span>
-          <b>${alt.durationMin}분</b>
-        </div>
-
-        <div class="compare-row2 risk-score">
-          <span>위험점수</span>
-          <b>${alt.risk.riskScoreText}</b>
-        </div>
-
-        <div class="compare-row2">
-          <span>사고이력</span>
-          <b>${alt.risk.totalCount}건</b>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="risk-score-guide">
-    <h3>
-      <img src="chart-bar.svg" class="title-svg">
-      위험점수 안내
-    </h3>
-    <p>경로 주변 사고이력, 사고 심각도(EPDO), 주변 교통량 보정값을 함께 반영한 참고 지표입니다.</p>
-    <p><b>점수가 낮을수록 사고 심각도와 교통량을 고려했을 때 상대적으로 부담이 적은 경로</b>를 의미합니다.</p>
-    <p>※ 실제 위험을 예측하거나 단정하는 값은 아닙니다.</p>
-  </div>
-`;
-  
-document.getElementById("info").appendChild(resultWrap);
-/* 추천경로가 1100도로 또는 5·16도로를 지나는지 확인 */
-const detectedMountainRoads = detectMountainRoad(recommend);
+  roads.forEach(roadName => {
+    detectedMountainRoads.push(
+      (index + 1) + "코스: " + roadName
+    );
+  });
+});
 
 if(detectedMountainRoads.length > 0){
   setTimeout(() => {
     showMountainRoadPopup(detectedMountainRoads);
   }, 450);
 }
-const compactNavi = resultWrap.querySelector(".final-navi");
-const safeBtn = document.createElement("button");
-safeBtn.className = "navi-btn";
-safeBtn.innerHTML = `
-  <span class="nav-icon naver">N</span>
-  <span class="nav-text">
-    <b>네이버지도</b>
-    <small>길안내</small>
-  </span>
-`;
-safeBtn.onclick = function(){
-  openNaverMap(selectedRouteIndex);
-};
 
-const tmapBtn = document.createElement("button");
-tmapBtn.className = "navi-btn";
-tmapBtn.innerHTML = `
-  <span class="nav-icon tmap">T</span>
-  <span class="nav-text">
-    <b>TMAP</b>
-    <small>길안내</small>
-  </span>
-`;
-tmapBtn.onclick = function(){
-  openTmap(selectedRouteIndex);
-};
-
-const kakaoBtn = document.createElement("button");
-kakaoBtn.className = "navi-btn";
-kakaoBtn.innerHTML = `
-  <span class="nav-icon kakao">K</span>
-  <span class="nav-text">
-    <b>카카오맵</b>
-    <small>길안내</small>
-  </span>
-`;
-kakaoBtn.onclick = function(){
-  openKakaoNavi(selectedRouteIndex);
-};
-
-compactNavi.appendChild(safeBtn);
-compactNavi.appendChild(tmapBtn);
-compactNavi.appendChild(kakaoBtn);
+/*
+  분석 완료 후 경로분석 탭으로 자동 이동
+*/
+showRouteAnalysis();
     
     L.marker([startLat,startLng])
       .addTo(routeLayer)
@@ -4387,73 +4266,7 @@ function closeMountainRoadPopup(){
   link.click();
   link.remove();
 }
-  function getSelectedRoute(){
-  if(!lastRouteSummaries || lastRouteSummaries.length === 0){
-    return null;
-  }
 
-  return lastRouteSummaries[selectedRouteIndex] || lastRouteSummaries[0];
-}
-
-function getRouteViaPoints(route, maxPoints = 3){
-  if(!route || !Array.isArray(route.coords) || route.coords.length < 3){
-    return [];
-  }
-
-  const coords = route.coords;
-
-  // 경로 전체 누적거리 계산
-  const cumulative = [0];
-  let totalDistance = 0;
-
-  for(let i = 1; i < coords.length; i++){
-    totalDistance += getDistanceKm(
-      coords[i - 1][0],
-      coords[i - 1][1],
-      coords[i][0],
-      coords[i][1]
-    );
-
-    cumulative.push(totalDistance);
-  }
-
-  if(totalDistance === 0){
-    return [];
-  }
-
-  const viaPoints = [];
-
-  // 출발지와 목적지 사이에 최대 3개 지점을 거리 기준으로 균등 배치
-  for(let i = 1; i <= maxPoints; i++){
-    const targetDistance =
-      totalDistance * (i / (maxPoints + 1));
-
-    let selectedIndex = cumulative.findIndex(
-      distance => distance >= targetDistance
-    );
-
-    if(selectedIndex <= 0){
-      selectedIndex = 1;
-    }
-
-    if(selectedIndex >= coords.length - 1){
-      selectedIndex = coords.length - 2;
-    }
-
-    const point = coords[selectedIndex];
-
-    viaPoints.push({
-      lat: point[0],
-      lng: point[1],
-      name:
-        (selectedRouteIndex + 1) +
-        "코스 경유지 " +
-        i
-    });
-  }
-
-  return viaPoints;
-}
   function updateLastFeedbackData(index){
 
   if(!lastRouteSummaries || lastRouteSummaries.length === 0){
@@ -4507,66 +4320,36 @@ function getRouteViaPoints(route, maxPoints = 3){
     currentArea: customStartArea || "기타"
   };
 }
-function selectRouteCourse(index){
-  selectedRouteIndex = index;
 
-  document.querySelectorAll(".course-choice-btn").forEach((btn, i) => {
-    btn.classList.toggle("active", i === index);
-  });
+function openNaverMap(){
 
-  lastNavigation = "";
-  updateLastFeedbackData(index);
-}
-
-function openNaverMap(courseIndex = selectedRouteIndex){
   if(!lastStart || !lastEnd){
-    alert("먼저 안전경로를 분석해주세요.");
+    alert("먼저 경로를 분석해주세요.");
     return;
   }
-
-  selectedRouteIndex = courseIndex;
-
-  const selectedRoute = getSelectedRoute();
-  const viaPoints = getRouteViaPoints(selectedRoute, 3);
 
   const appname =
     "https://koroad-jeju.github.io/jeju-safe-map";
 
-  let url =
+  const url =
     "nmap://route/car?" +
     "slat=" + lastStart.lat +
     "&slng=" + lastStart.lng +
     "&sname=" + encodeURIComponent(lastStart.name) +
     "&dlat=" + lastEnd.lat +
     "&dlng=" + lastEnd.lng +
-    "&dname=" + encodeURIComponent(lastEnd.name);
-
-  viaPoints.forEach((point, index) => {
-    const number = index + 1;
-
-    url +=
-      "&v" + number + "lat=" + point.lat +
-      "&v" + number + "lng=" + point.lng +
-      "&v" + number + "name=" +
-      encodeURIComponent(point.name);
-  });
-
-  url +=
-    "&appname=" +
-    encodeURIComponent(appname);
-
-  console.log("네이버 경유지:", viaPoints);
+    "&dname=" + encodeURIComponent(lastEnd.name) +
+    "&appname=" + encodeURIComponent(appname);
 
   sendNavigationLog("네이버지도");
   openNavigationApp(url);
 }
- function openTmap(courseIndex = selectedRouteIndex){
+ function openTmap(){
+
   if(!lastStart || !lastEnd){
-    alert("먼저 안전경로를 분석해주세요.");
+    alert("먼저 경로를 분석해주세요.");
     return;
   }
-
-  selectedRouteIndex = courseIndex;
 
   const url =
     "tmap://route?" +
@@ -4576,17 +4359,16 @@ function openNaverMap(courseIndex = selectedRouteIndex){
     "&goalx=" + lastEnd.lng +
     "&goaly=" + lastEnd.lat +
     "&goalname=" + encodeURIComponent(lastEnd.name);
-   
-sendNavigationLog("TMAP");
- openNavigationApp(url);
+
+  sendNavigationLog("TMAP");
+  openNavigationApp(url);
 }
-function openKakaoNavi(courseIndex = selectedRouteIndex){
+function openKakaoNavi(){
+
   if(!lastStart || !lastEnd){
-    alert("먼저 안전경로를 분석해주세요.");
+    alert("먼저 경로를 분석해주세요.");
     return;
   }
-
-  selectedRouteIndex = courseIndex;
 
   const url =
     "kakaomap://route?" +
@@ -5150,7 +4932,13 @@ document.body.classList.add("risk-map-mode");
   setTimeout(initRiskMiniMap, 200);
 }
 function showRouteAnalysis(){
-  document.body.classList.remove("risk-map-mode", "safety-guide-mode", "route-active");
+
+  document.body.classList.remove(
+    "risk-map-mode",
+    "safety-guide-mode",
+    "route-active"
+  );
+
   document.body.classList.add("route-analysis-mode");
 
   document.querySelectorAll(".bottom-item").forEach(btn => {
@@ -5158,33 +4946,61 @@ function showRouteAnalysis(){
   });
 
   const buttons = document.querySelectorAll(".bottom-item");
-  if(buttons[1]) buttons[1].classList.add("active");
 
-  const box = document.getElementById("routeAnalysisContent");
+  if(buttons[1]){
+    buttons[1].classList.add("active");
+  }
 
-if(!lastRouteAnalysisHtml){
-  box.innerHTML = `
-<div class="route-analysis-empty">
+  const box =
+    document.getElementById("routeAnalysisContent");
 
-  <div class="empty-icon"><img src="route.svg" class="empty-icon"></div>
+  if(!lastRouteAnalysisHtml){
 
-  <h3>아직 경로를 분석하지 않았어요</h3>
+    box.innerHTML = `
+      <div class="route-analysis-empty">
 
-  <p>
-    홈에서 출발지와 목적지를 입력한 뒤<br>
-    <b>'사고이력 기반 경로 비교'</b> 버튼을 눌러주세요.
-  </p>
+        <img src="route.svg" class="empty-icon">
 
-    <button type="button" onclick="goHome()">
-    <img src="home.svg">
-    홈으로 이동
-</button>
-</div>
-`;
-  return;
-}
+        <h3>아직 경로를 분석하지 않았어요</h3>
+
+        <p>
+          홈에서 출발지와 목적지를 입력한 뒤<br>
+          <b>'사고이력 기반 경로 비교'</b> 버튼을 눌러주세요.
+        </p>
+
+        <button type="button" onclick="goHome()">
+          <img src="home.svg">
+          홈으로 이동
+        </button>
+
+      </div>
+    `;
+
+    return;
+  }
 
   box.innerHTML = lastRouteAnalysisHtml;
+
+  /*
+    숨겨져 있던 지도가 다시 나타난 뒤
+    크기를 정상적으로 계산하도록 처리
+  */
+  setTimeout(() => {
+    map.invalidateSize();
+
+    if(lastRouteSummaries.length > 0){
+      const allRouteCoords =
+        lastRouteSummaries.flatMap(route => route.coords);
+
+      map.fitBounds(
+        L.latLngBounds(allRouteCoords),
+        {
+          paddingTopLeft:[25,25],
+          paddingBottomRight:[25,360]
+        }
+      );
+    }
+  }, 250);
 }
 function openSideMenu(){
   document.getElementById("sideMenu").classList.add("active");
