@@ -2653,6 +2653,164 @@ body.route-analysis-mode .compare-head b{
 body.route-analysis-mode .info-split-col.tip{
   margin-top:12px;
 }
+  /* ===== ORS 실패 시 지도 없는 비상 안내 화면 ===== */
+
+body.route-fallback-mode #map{
+  display:none !important;
+}
+
+body.route-fallback-mode .route-analysis-page{
+  top:0 !important;
+  bottom:68px !important;
+  border-radius:0 !important;
+  padding:18px 14px 105px !important;
+  background:#f8fafc;
+}
+
+body.route-fallback-mode .app-topbar{
+  display:none !important;
+}
+
+.fallback-notice-card{
+  padding:18px;
+  margin-bottom:12px;
+  border-radius:22px;
+  background:#fff8e8;
+  border:1px solid #fde7b0;
+  box-shadow:0 8px 22px rgba(15,23,42,.06);
+}
+
+.fallback-notice-card h3{
+  margin:0 0 8px;
+  color:#92400e;
+  font-size:18px;
+  font-weight:900;
+}
+
+.fallback-notice-card p{
+  margin:0;
+  color:#78613b;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.6;
+  word-break:keep-all;
+}
+
+.fallback-route-card{
+  padding:17px;
+  margin-bottom:12px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid #edf2f7;
+  box-shadow:0 8px 22px rgba(15,23,42,.06);
+}
+
+.fallback-route-title{
+  margin-bottom:13px;
+  font-size:15px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.fallback-region-grid{
+  display:grid;
+  grid-template-columns:1fr 32px 1fr;
+  align-items:center;
+  gap:7px;
+}
+
+.fallback-region-box{
+  min-width:0;
+  padding:13px 9px;
+  border-radius:17px;
+  background:#f8fafc;
+  text-align:center;
+}
+
+.fallback-region-box span{
+  display:block;
+  margin-bottom:5px;
+  color:#64748b;
+  font-size:11px;
+  font-weight:800;
+}
+
+.fallback-region-box b{
+  display:block;
+  color:#0f766e;
+  font-size:14px;
+  font-weight:900;
+  word-break:keep-all;
+}
+
+.fallback-region-arrow{
+  color:#14b8a6;
+  font-size:21px;
+  font-weight:900;
+  text-align:center;
+}
+
+.fallback-info-card{
+  margin-bottom:12px;
+  padding:17px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid #edf2f7;
+  box-shadow:0 8px 22px rgba(15,23,42,.06);
+}
+
+.fallback-info-card h3{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 12px;
+  color:#0f172a;
+  font-size:16px;
+  font-weight:900;
+}
+
+.fallback-info-item{
+  margin-top:9px;
+  padding:11px 12px;
+  border-radius:15px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.55;
+  word-break:keep-all;
+}
+
+.fallback-cache-badge{
+  display:inline-block;
+  margin-bottom:10px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#e8f8f5;
+  color:#0f766e;
+  font-size:11px;
+  font-weight:900;
+}
+
+.fallback-cache-time{
+  margin-top:10px;
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:700;
+  text-align:right;
+}
+
+.fallback-retry-btn{
+  width:100%;
+  height:48px;
+  margin:0 0 12px;
+  border:1px solid #cdeee8;
+  border-radius:17px;
+  background:#fff;
+  color:#0f766e;
+  font-size:14px;
+  font-weight:900;
+}
 </style>
 </head>
 
@@ -3327,6 +3485,7 @@ customEnd = null;
 customStartName = null;
 customEndName = null;
 customStartArea = "기타";
+  customEndArea = "기타";
 lastNavigation = "";
 
 lastStart = null;
@@ -3392,6 +3551,613 @@ ratingSubmitted = false;
   ]
 };
 
+  /* ===== ORS 실패 시 목적지 권역 안내 정보 ===== */
+
+const fallbackRegionInfo = {
+  "공항권": {
+    risks:[
+      "렌터카 인수 직후 초행운전 차량과 공항 진출입 차량이 많습니다.",
+      "교차로에서 급차로 변경하거나 진출로를 놓치는 차량에 주의하세요."
+    ],
+    roads:"공항로·용문로·도령로 등 공항 진출입 구간",
+    tips:[
+      "출발 전 내비게이션 경로를 미리 확인하세요.",
+      "교차로와 진출입부에서는 충분히 감속하세요.",
+      "항공기 도착 시간대에는 렌터카 차량이 집중될 수 있습니다."
+    ]
+  },
+
+  "제주시도심권": {
+    risks:[
+      "교차로와 차로 변경 구간이 많고 보행자 통행이 잦습니다.",
+      "출퇴근 시간에는 정체와 급정지가 발생할 수 있습니다."
+    ],
+    roads:"연삼로·연북로·노형로·도령로 등 도심 간선도로",
+    tips:[
+      "우회전 전 보행자와 자전거를 다시 확인하세요.",
+      "버스와 택시의 정차·출발에 대비해 안전거리를 확보하세요.",
+      "차선을 놓쳤을 때 무리하게 끼어들지 마세요."
+    ]
+  },
+
+  "서귀포도심권": {
+    risks:[
+      "경사구간과 교차로가 이어지고 보행자 이동이 많습니다.",
+      "관광지와 전통시장 주변에서 갑작스러운 정차가 발생할 수 있습니다."
+    ],
+    roads:"중앙로·일주동로·516로 서귀포 도심 구간",
+    tips:[
+      "내리막길에서는 앞차와 충분한 거리를 유지하세요.",
+      "시장과 상가 주변에서는 보행자를 주의하세요.",
+      "교차로 진입 전에 미리 차로를 확인하세요."
+    ]
+  },
+
+  "애월권": {
+    risks:[
+      "해안도로와 카페·관광지 진출입 차량이 많습니다.",
+      "주정차 차량 사이에서 보행자가 나올 수 있습니다."
+    ],
+    roads:"애월해안도로·일주서로·평화로 연결 구간",
+    tips:[
+      "경치에 시선이 분산되지 않도록 전방주시를 유지하세요.",
+      "주차장 입구와 갓길 주변에서 충분히 감속하세요.",
+      "해안도로에서는 갑작스러운 정차 차량에 대비하세요."
+    ]
+  },
+
+  "협재·한림권": {
+    risks:[
+      "해수욕장 주변 보행자와 주정차 차량이 많습니다.",
+      "관광지 입구에서 급감속하거나 차로를 변경하는 차량이 있습니다."
+    ],
+    roads:"일주서로·한림해안로·협재해수욕장 진입도로",
+    tips:[
+      "관광지 진입 전 속도를 충분히 줄이세요.",
+      "주차 차량 사이의 보행자와 어린이를 주의하세요.",
+      "해안도로에서는 전방주시를 유지하세요."
+    ]
+  },
+
+  "서부중산간권": {
+    risks:[
+      "곡선도로와 경사구간이 많고 야간에는 시야 확보가 어렵습니다.",
+      "농로와 마을도로에서 저속 차량이 갑자기 진입할 수 있습니다."
+    ],
+    roads:"평화로·산록남로·서부 중산간 연결도로",
+    tips:[
+      "내리막에서는 풋브레이크와 엔진브레이크를 함께 사용하세요.",
+      "안개나 비가 내리면 전조등을 켜고 감속하세요.",
+      "급커브 진입 전 충분히 속도를 낮추세요."
+    ]
+  },
+
+  "함덕·조천권": {
+    risks:[
+      "해수욕장과 마을도로가 연결되어 보행자 통행이 많습니다.",
+      "관광지 주차장 주변에서 급정지 차량이 발생할 수 있습니다."
+    ],
+    roads:"일주동로·조함해안로·함덕해수욕장 진입도로",
+    tips:[
+      "해수욕장과 마을 구간에서는 서행하세요.",
+      "횡단보도와 주차장 출입구를 주의하세요.",
+      "자전거와 개인형 이동장치를 충분한 간격으로 추월하세요."
+    ]
+  },
+
+  "김녕·월정권": {
+    risks:[
+      "해안도로를 이용하는 관광차량과 주정차 차량이 많습니다.",
+      "좁은 마을도로에서 맞은편 차량과 마주칠 수 있습니다."
+    ],
+    roads:"월정·김녕해안도로·일주동로 연결 구간",
+    tips:[
+      "해안도로 주행 중 전방주시를 유지하세요.",
+      "좁은 도로에서는 속도를 줄이고 양보 운전하세요.",
+      "주정차 차량 사이의 보행자를 주의하세요."
+    ]
+  },
+
+  "성산권": {
+    risks:[
+      "관광버스와 렌터카 통행이 많아 갑작스러운 차로 변경이 발생할 수 있습니다.",
+      "관광지 입구와 주차장 주변에 보행자가 많습니다."
+    ],
+    roads:"일주동로·성산중앙로·성산일출봉 진입도로",
+    tips:[
+      "목적지를 놓쳐도 급하게 차선을 바꾸지 마세요.",
+      "관광버스 주변에서는 충분한 안전거리를 유지하세요.",
+      "관광지 진입 전 미리 차로를 확인하세요."
+    ]
+  },
+
+  "동부중산간권": {
+    risks:[
+      "중산간 도로는 교차로 시야가 제한되고 농기계가 진입할 수 있습니다.",
+      "비와 안개가 발생하면 노면과 시야 상태가 빠르게 변할 수 있습니다."
+    ],
+    roads:"번영로·남조로·동부 중산간 연결도로",
+    tips:[
+      "교차로와 곡선구간 진입 전 충분히 감속하세요.",
+      "농기계와 저속 차량을 무리하게 추월하지 마세요.",
+      "안개가 발생하면 전조등을 켜고 차간거리를 늘리세요."
+    ]
+  },
+
+  "중문권": {
+    risks:[
+      "호텔과 관광시설 진출입 차량이 많습니다.",
+      "주차장과 횡단보도 주변에서 보행자 이동이 잦습니다."
+    ],
+    roads:"중문관광로·색달로·일주서로 연결 구간",
+    tips:[
+      "관광단지 진입 전 미리 차선을 확인하세요.",
+      "호텔과 주차장 출입구 주변에서 서행하세요.",
+      "횡단보도와 대형버스 주변을 주의하세요."
+    ]
+  },
+
+  "한라산권": {
+    risks:[
+      "급커브와 급경사 구간이 많고 기상변화가 빠릅니다.",
+      "안개·비·결빙으로 노면 상태가 갑자기 나빠질 수 있습니다."
+    ],
+    roads:"1100도로·5·16도로·산록도로 등 산간도로",
+    tips:[
+      "급커브 진입 전에 충분히 감속하세요.",
+      "내리막에서는 엔진브레이크를 함께 사용하세요.",
+      "안개·비·결빙 시 전조등을 켜고 안전거리를 늘리세요."
+    ]
+  },
+
+  "기타": {
+    risks:[
+      "초행길에서는 교차로와 관광지 진출입 구간을 주의해야 합니다.",
+      "제주 도로는 지역에 따라 좁은 마을길과 곡선도로가 이어질 수 있습니다."
+    ],
+    roads:"목적지 주변 교차로·관광지 진입도로",
+    tips:[
+      "내비게이션 안내를 미리 확인하세요.",
+      "목적지를 놓쳐도 급차로 변경하지 마세요.",
+      "비·안개·야간에는 속도를 줄이고 안전거리를 확보하세요."
+    ]
+  }
+};
+
+function getDestinationRegion(name, currentRegion = "기타"){
+  if(currentRegion && currentRegion !== "기타"){
+    return currentRegion;
+  }
+
+  const destinationName = name || "";
+
+  if(
+    destinationName.includes("성산") ||
+    destinationName.includes("우도")
+  ){
+    return "성산권";
+  }
+
+  if(
+    destinationName.includes("함덕") ||
+    destinationName.includes("조천")
+  ){
+    return "함덕·조천권";
+  }
+
+  if(
+    destinationName.includes("월정") ||
+    destinationName.includes("김녕") ||
+    destinationName.includes("비자림")
+  ){
+    return "김녕·월정권";
+  }
+
+  if(
+    destinationName.includes("협재") ||
+    destinationName.includes("한림")
+  ){
+    return "협재·한림권";
+  }
+
+  if(
+    destinationName.includes("애월")
+  ){
+    return "애월권";
+  }
+
+  if(
+    destinationName.includes("중문")
+  ){
+    return "중문권";
+  }
+
+  if(
+    destinationName.includes("1100") ||
+    destinationName.includes("한라산") ||
+    destinationName.includes("성판악") ||
+    destinationName.includes("사려니")
+  ){
+    return "한라산권";
+  }
+
+  if(
+    destinationName.includes("오설록") ||
+    destinationName.includes("카멜리아힐")
+  ){
+    return "서부중산간권";
+  }
+
+  if(
+    destinationName.includes("공항")
+  ){
+    return "공항권";
+  }
+
+  return currentRegion || "기타";
+}
+
+/* ===== 최근 성공 경로 저장 ===== */
+
+function makeRouteCacheKey(){
+  if(!lastStart || !lastEnd){
+    return "";
+  }
+
+  const startLat = Number(lastStart.lat).toFixed(3);
+  const startLng = Number(lastStart.lng).toFixed(3);
+  const endLat = Number(lastEnd.lat).toFixed(3);
+  const endLng = Number(lastEnd.lng).toFixed(3);
+
+  return [
+    "jejuSafeRoute",
+    startLat,
+    startLng,
+    endLat,
+    endLng
+  ].join("_");
+}
+
+function saveSuccessfulRouteCache(routeSummaries, tips){
+  try{
+    const key = makeRouteCacheKey();
+
+    if(!key || !routeSummaries || routeSummaries.length === 0){
+      return;
+    }
+
+    const cacheData = {
+      savedAt:Date.now(),
+      startName:lastStart?.name || "",
+      endName:lastEnd?.name || "",
+      startArea:customStartArea || "기타",
+      endArea:customEndArea || "기타",
+      routes:routeSummaries.slice(0, 2).map((route, index) => ({
+        course:index + 1,
+        distanceKm:route.distanceKm,
+        durationMin:route.durationMin,
+        totalCount:route.risk.totalCount,
+        totalEpdo:route.risk.totalEpdo
+      })),
+      tips:Array.isArray(tips) ? tips.slice(0, 3) : []
+    };
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(cacheData)
+    );
+
+  }catch(error){
+    console.warn("최근 경로 저장 실패:", error);
+  }
+}
+
+function loadSuccessfulRouteCache(){
+  try{
+    const key = makeRouteCacheKey();
+
+    if(!key){
+      return null;
+    }
+
+    const raw = localStorage.getItem(key);
+
+    if(!raw){
+      return null;
+    }
+
+    const cache = JSON.parse(raw);
+
+    /*
+      7일 이내 성공한 동일 출발지·목적지 결과만 사용
+    */
+    const maxAge = 7 * 24 * 60 * 60 * 1000;
+
+    if(
+      !cache.savedAt ||
+      Date.now() - cache.savedAt > maxAge
+    ){
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return cache;
+
+  }catch(error){
+    console.warn("최근 경로 불러오기 실패:", error);
+    return null;
+  }
+}
+
+function makeNavigationButtonsHtml(){
+  return `
+    <div class="navi-section">
+      <h3>내비게이션으로 길안내</h3>
+
+      <div class="navi-grid final-navi">
+
+        <button type="button" class="navi-btn" onclick="openNaverMap()">
+          <span class="nav-icon naver">N</span>
+          <span class="nav-text">
+            <b>네이버지도</b>
+            <small>길안내</small>
+          </span>
+        </button>
+
+        <button type="button" class="navi-btn" onclick="openTmap()">
+          <span class="nav-icon tmap">T</span>
+          <span class="nav-text">
+            <b>TMAP</b>
+            <small>길안내</small>
+          </span>
+        </button>
+
+        <button type="button" class="navi-btn" onclick="openKakaoNavi()">
+          <span class="nav-icon kakao">K</span>
+          <span class="nav-text">
+            <b>카카오맵</b>
+            <small>길안내</small>
+          </span>
+        </button>
+
+      </div>
+
+      <div class="tmap-note">
+        ※ 길안내 경로는 각 내비게이션 앱의 설정과 교통상황에 따라 달라질 수 있습니다.
+      </div>
+    </div>
+  `;
+}
+
+function buildCachedFallbackHtml(cache){
+  const routeCards = cache.routes.map(route => `
+    <div class="compare-mini ${route.course === 1 ? "recommend" : "alt"}">
+      <div class="compare-head">
+        <b>${route.course}코스</b>
+      </div>
+
+      <div class="compare-row2">
+        <span>거리</span>
+        <b>${route.distanceKm}km</b>
+      </div>
+
+      <div class="compare-row2">
+        <span>예상시간</span>
+        <b>${route.durationMin}분</b>
+      </div>
+
+      <div class="compare-row2">
+        <span>경로 주변 사고이력</span>
+        <b>${route.totalCount}건</b>
+      </div>
+
+      <div class="compare-row2">
+        <span>사고 심각도 합계</span>
+        <b>${route.totalEpdo}점</b>
+      </div>
+    </div>
+  `).join("");
+
+  const savedTime = new Date(cache.savedAt).toLocaleString("ko-KR");
+
+  return `
+    <div class="routePath">
+      ${lastStart.name}
+      <span class="arrow">→</span>
+      ${lastEnd.name}
+    </div>
+
+    <div class="fallback-notice-card">
+      <div class="fallback-cache-badge">최근 분석결과 제공</div>
+
+      <h3>실시간 경로 지도를 불러오지 못했습니다</h3>
+
+      <p>
+        같은 출발지와 목적지에서 최근 성공한 분석결과를 불러왔습니다.
+        실제 교통상황과 내비게이션 안내 경로는 달라질 수 있습니다.
+      </p>
+
+      <div class="fallback-cache-time">
+        저장 시각: ${savedTime}
+      </div>
+    </div>
+
+    <div class="compare-detail-new always-open">
+      <div class="compare-title">
+        <img src="chart-bar.svg" class="title-svg">
+        최근 경로 분석결과
+      </div>
+
+      <div class="compare-cards">
+        ${routeCards}
+      </div>
+
+      <div class="route-data-note">
+        ※ 최근 성공한 동일 출발지·목적지 분석결과이며 실시간 경로정보가 아닙니다.
+      </div>
+    </div>
+
+    ${makeNavigationButtonsHtml()}
+
+    <button
+      type="button"
+      class="fallback-retry-btn"
+      onclick="drawRoutes()">
+      실시간 경로 다시 분석하기
+    </button>
+
+    <div class="info-split-col tip">
+      <h3>
+        <img src="map-pin-check.svg" class="title-svg">
+        ${lastEnd.name} 이동 시 안전운전 팁
+      </h3>
+
+      <div class="tip-list">
+        ${cache.tips.map((tip, index) => `
+          <div class="tip-item">
+            <span>
+              <img
+                src="${index === 0 ? "car.svg" : index === 1 ? "alert-triangle.svg" : "eye.svg"}"
+                class="tip-icon">
+            </span>
+            <div>${tip}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildRegionFallbackHtml(){
+  const startArea =
+    customStartArea && customStartArea !== "기타"
+      ? customStartArea
+      : "출발지 주변";
+
+  const endArea =
+    customEndArea && customEndArea !== "기타"
+      ? customEndArea
+      : getDestinationRegion(lastEnd?.name, "기타");
+
+  const guide =
+    fallbackRegionInfo[endArea] ||
+    fallbackRegionInfo["기타"];
+
+  return `
+    <div class="routePath">
+      ${lastStart.name}
+      <span class="arrow">→</span>
+      ${lastEnd.name}
+    </div>
+
+    <div class="fallback-notice-card">
+      <h3>실시간 경로 연결이 원활하지 않습니다</h3>
+
+      <p>
+        현재 실시간 경로를 불러오지 못해
+        목적지 권역을 기준으로 안전정보를 안내합니다.
+      </p>
+    </div>
+
+    <div class="fallback-route-card">
+      <div class="fallback-route-title">
+        출발지·목적지 권역
+      </div>
+
+      <div class="fallback-region-grid">
+        <div class="fallback-region-box">
+          <span>출발 권역</span>
+          <b>${startArea}</b>
+        </div>
+
+        <div class="fallback-region-arrow">→</div>
+
+        <div class="fallback-region-box">
+          <span>목적지 권역</span>
+          <b>${endArea}</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="fallback-info-card">
+      <h3>
+        <img src="alert-triangle.svg" class="title-svg">
+        목적지 주변 주요 위험 요소
+      </h3>
+
+      <div class="fallback-info-item">
+        ${guide.risks[0]}
+      </div>
+
+      <div class="fallback-info-item">
+        ${guide.risks[1]}
+      </div>
+    </div>
+
+    <div class="fallback-info-card">
+      <h3>
+        <img src="map-2.png" class="title-svg">
+        해당 지역에서 주의할 도로
+      </h3>
+
+      <div class="fallback-info-item">
+        ${guide.roads}
+      </div>
+    </div>
+
+    <div class="fallback-info-card">
+      <h3>
+        <img src="map-pin-check.svg" class="title-svg">
+        맞춤 안전운전 팁
+      </h3>
+
+      ${guide.tips.map(tip => `
+        <div class="fallback-info-item">
+          ${tip}
+        </div>
+      `).join("")}
+    </div>
+
+    ${makeNavigationButtonsHtml()}
+
+    <button
+      type="button"
+      class="fallback-retry-btn"
+      onclick="drawRoutes()">
+      실시간 경로 다시 분석하기
+    </button>
+
+    <div class="route-data-note">
+      ※ 위 내용은 실시간 이동 경로 분석결과가 아닌 목적지 권역 기반 참고정보입니다.
+    </div>
+  `;
+}
+
+function showRouteFallback(){
+  if(routeLayer){
+    map.removeLayer(routeLayer);
+    routeLayer = null;
+  }
+
+  const cachedRoute = loadSuccessfulRouteCache();
+
+  if(cachedRoute){
+    lastRouteAnalysisHtml =
+      buildCachedFallbackHtml(cachedRoute);
+  }else{
+    lastRouteAnalysisHtml =
+      buildRegionFallbackHtml();
+  }
+
+  lastRouteSummaries = [];
+  ratingSubmitted = false;
+
+  document.body.classList.add(
+    "route-fallback-mode"
+  );
+
+  showRouteAnalysis();
+}
   const fixedDestinationCoords = {
   "성산일출봉": { lat:33.4589, lng:126.9347 },
   "중문관광단지": { lat:33.2498, lng:126.4128 },
@@ -3433,6 +4199,7 @@ function useCurrentLocation(){
         );
 
         const data = await response.json();
+        document.body.classList.remove("route-fallback-mode");
 
         if(data.documents && data.documents.length > 0){
 const address =
@@ -3681,22 +4448,16 @@ setTimeout(()=>{
 
 try{
   response = await requestOrsRoute(body);
+
 }catch(err){
   clearTimeout(slowLoadingTimer);
-  console.error("경로 분석 서버 전체 실패:", err);
 
-  if(routeLayer){
-    map.removeLayer(routeLayer);
-    routeLayer = null;
-  }
+  console.error(
+    "경로 분석 서버 전체 실패:",
+    err
+  );
 
-  document.getElementById("info").innerHTML = `
-    <div class="loading-card">
-      <b>경로 분석 서버가 잠시 불안정합니다</b>
-      <p>출발지와 목적지는 유지되어 있어요. 잠시 후 다시 시도해주세요.</p>
-      <p style="margin-top:6px;">${err.message}</p>
-    </div>
-  `;
+  showRouteFallback();
 
   return;
 }
@@ -3792,6 +4553,10 @@ const tips = matchedTipKey
       "목적지를 놓쳤더라도 급차로 변경하지 마세요.",
       "교차로와 관광지 진출입 구간에서는 충분히 감속하세요."
     ];
+    saveSuccessfulRouteCache(
+  routeSummaries,
+  tips
+);
 
 /*
   코스 비교 결과 화면
@@ -4015,33 +4780,37 @@ showRouteAnalysis();
       .addTo(routeLayer)
       .bindPopup("목적지: "+endName);
 
- setTimeout(() => {
-  map.invalidateSize();
-  map.fitBounds(L.latLngBounds(allCoords), {
-  paddingTopLeft:[30,70],
-  paddingBottomRight:[20,320]
-});
-}, 350);
-    
- }catch(error){
-    clearTimeout(slowLoadingTimer);
-  console.error("경로 분석 오류:", error);
+setTimeout(() => {
 
-  if(routeLayer){
-    map.removeLayer(routeLayer);
-    routeLayer = null;
+  /*
+    ORS 실패 화면에서는 지도를 사용하지 않음
+  */
+  if(
+    document.body.classList.contains(
+      "route-fallback-mode"
+    )
+  ){
+    return;
   }
 
-  document.getElementById("info").innerHTML = `
-    <div class="loading-card">
-      <b>경로 분석 중 오류가 발생했습니다</b>
-      <p>일시적인 연결 문제일 수 있어요. 잠시 후 다시 시도해주세요.</p>
-    </div>
-  `;
-}
-}
-  function analyzeRouteRisk(coords){
- const SEARCH_RADIUS_M = 250;
+  map.invalidateSize();
+
+  if(lastRouteSummaries.length > 0){
+    const allRouteCoords =
+      lastRouteSummaries.flatMap(
+        route => route.coords
+      );
+
+    map.fitBounds(
+      L.latLngBounds(allRouteCoords),
+      {
+        paddingTopLeft:[25,25],
+        paddingBottomRight:[25,360]
+      }
+    );
+  }
+
+}, 250);
 
   let totalScore = 0;
   let accidentCount = 0;
@@ -4430,8 +5199,23 @@ if(fixedKey){
     lat: parseFloat(place.y),
     lng: parseFloat(place.x)
   };
+
   customEndName = place.place_name;
 }
+
+customEndArea = getJejuRegion(
+  place.road_address_name ||
+  place.address_name ||
+  place.place_name
+);
+
+/*
+  일부 관광지는 행정주소 대신 관광지 이름으로 권역 보정
+*/
+customEndArea = getDestinationRegion(
+  customEndName,
+  customEndArea
+);
 
        document.getElementById("endInput").value = place.place_name;
       
@@ -4533,7 +5317,7 @@ function selectPopularTour(){
   };
 
   customEndName = data[0];
-
+customEndArea = getDestinationRegion(customEndName, "기타");
   document.getElementById("endInput").value = data[0];
 
   document.getElementById("endResults").innerHTML = "";
@@ -4548,6 +5332,7 @@ function goHome(){
   document.body.classList.remove("route-active");
   document.body.classList.remove("safety-guide-mode");
   document.body.classList.remove("route-analysis-mode");
+  document.body.classList.remove("route-fallback-mode");
   document.getElementById("adminStatsPage").classList.remove("active");
 
   document.querySelector(".panel").classList.remove("route-mode");
@@ -4566,6 +5351,7 @@ function goHome(){
   customStartName = null;
   customEndName = null;
   customStartArea = "기타";
+  customEndArea = "기타";
 lastNavigation = "";
 
   if(routeLayer){
