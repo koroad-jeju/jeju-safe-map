@@ -4199,7 +4199,6 @@ function useCurrentLocation(){
         );
 
         const data = await response.json();
-        document.body.classList.remove("route-fallback-mode");
 
         if(data.documents && data.documents.length > 0){
 const address =
@@ -4463,6 +4462,7 @@ try{
 }
     clearTimeout(slowLoadingTimer);
     const data = await response.json();
+    document.body.classList.remove("route-fallback-mode");
 
     if(!data.features || data.features.length===0){
       alert("경로 데이터를 찾지 못했어요.");
@@ -4811,6 +4811,26 @@ setTimeout(() => {
   }
 
 }, 250);
+    }catch(error){
+  clearTimeout(slowLoadingTimer);
+
+  console.error(
+    "경로 분석 중 오류가 발생했습니다:",
+    error
+  );
+
+  if(routeLayer){
+    map.removeLayer(routeLayer);
+    routeLayer = null;
+  }
+
+  showRouteFallback();
+}
+
+}
+
+function analyzeRouteRisk(coords){
+  const SEARCH_RADIUS_M = 250;
 
   let totalScore = 0;
   let accidentCount = 0;
